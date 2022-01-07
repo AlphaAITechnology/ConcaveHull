@@ -121,6 +121,10 @@ def ConcaveHull(points, distList = [10]):
             neigh.append(sortPts)
         ptNeigh[tuple(np.flip(imPt))] = neigh
     
+    # Reduce the runtime of seeking potential collision lines
+    setArrAdd = lambda x, y: [*map(lambda z: z.add(y), x)]
+    collisionSet = np.array([set() for _ in range(row * col)], dtype = object).reshape((row,col))
+    
     iniPt = prevPt = (normXs[topLeft],normYs[topLeft])
     line = []
     prevAngle = np.pi
@@ -142,9 +146,14 @@ def ConcaveHull(points, distList = [10]):
                 curPt = curPt.astype(int)
                 curAng = ptNeigh[prevPt][i][(nextIndex + j) % len(ptNeigh[prevPt][i])][2]
                 
+                lineArea = np.zeros((row,col))
+                cv2.line(lineArea, prevPt, curPt, 1, 2)
+                pts = np.where(lineArea)
+                lineIndex = list(set().union(*collisionSet[pts]))
+                
                 valid = 1 # 1: Valid, 0: Invalid, -1: Duplicate
-                for li in line:
-                    if collinearPoints(*prevPt,*curPt,*li) and prevPt == li[:2]:
+                for li in np.array(line)[lineIndex]:
+                    if collinearPoints(*prevPt,*curPt,*li) and prevPt == list(li[:2]):
                         # duplicates
                         valid = -1
                         break
@@ -155,6 +164,12 @@ def ConcaveHull(points, distList = [10]):
                 if valid > 0:
                     break
             if valid > 0:
+                # draw and add aware area for next collision detection
+                lineArea = np.zeros((row,col))
+                cv2.line(lineArea, prevPt, curPt, 1, 2)
+                pts = np.where(lineArea)
+                setArrAdd(collisionSet[pts],len(line))
+                
                 line.append([*prevPt,*curPt])
                 prevAngle = (curAng + np.pi) % (np.pi * 2)
                 prevPt = tuple(curPt)
