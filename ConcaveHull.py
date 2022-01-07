@@ -143,7 +143,7 @@ def ConcaveHull(points, distList = [10]):
             nextIndex = nextNodeIndex(np.round(ptNeigh[prevPt][i][...,2],6),np.round(prevAngle,6)) % len(ptNeigh[prevPt][i])
             for j in range(len(ptNeigh[prevPt][i])):
                 curPt = ptNeigh[prevPt][i][(nextIndex + j) % len(ptNeigh[prevPt][i])][:2]
-                curPt = curPt.astype(int)
+                curPt = tuple(curPt.astype(int).tolist())
                 curAng = ptNeigh[prevPt][i][(nextIndex + j) % len(ptNeigh[prevPt][i])][2]
                 
                 lineArea = np.zeros((row,col))
